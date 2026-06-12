@@ -1,30 +1,56 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:globewallet/main.dart';
+import 'package:globewallet/unispend_app.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('UniSpend dashboard renders and tracks entries', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const UniSpendApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('UniSpend'), findsOneWidget);
+    expect(find.text('Know what you can spend.'), findsOneWidget);
+    expect(find.text('Income'), findsWidgets);
+    expect(find.text('Expenses'), findsWidgets);
+    expect(find.text('Safe to spend'), findsWidgets);
+    expect(find.text('Weekly Summary'), findsOneWidget);
+    expect(find.text('Money Notes'), findsOneWidget);
+    expect(
+      find.text('You are balanced, but be careful with extra spending.'),
+      findsOneWidget,
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Income'));
+    await tester.pumpAndSettle();
+    final incomeFields = find.descendant(
+      of: find.byType(BottomSheet),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(incomeFields.first, 'Campus job');
+    await tester.enterText(incomeFields.last, '120');
+    await tester.tap(find.text('Save transaction'));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Campus job'), findsOneWidget);
+    expect(find.textContaining('\$120.00'), findsWidgets);
+    expect(find.text("You're on track this week."), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Expense'));
+    await tester.pumpAndSettle();
+    final expenseFields = find.descendant(
+      of: find.byType(BottomSheet),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(expenseFields.first, 'Groceries');
+    await tester.enterText(expenseFields.last, '35');
+    await tester.tap(find.text('Save transaction'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Groceries'), findsOneWidget);
+    expect(find.textContaining('\$85.00'), findsWidgets);
+
+    await tester.ensureVisible(find.byType(TextField));
+    await tester.enterText(find.byType(TextField), 'Save for lab supplies');
+    expect(find.text('Save for lab supplies'), findsOneWidget);
   });
 }
