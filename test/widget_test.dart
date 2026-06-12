@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:globewallet/unispend_app.dart';
+import 'package:unispend/unispend_app.dart';
 
 void main() {
   testWidgets('UniSpend dashboard renders and tracks entries', (

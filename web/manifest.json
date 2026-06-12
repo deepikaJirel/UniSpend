@@ -1,11 +1,11 @@
 {
-    "name": "globewallet",
-    "short_name": "globewallet",
+    "name": "UniSpend",
+    "short_name": "UniSpend",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Know what you can spend.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
