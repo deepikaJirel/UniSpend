@@ -1305,7 +1305,7 @@ class ProfileView extends StatelessWidget {
         icon: Icons.person_rounded,
         title: 'Student profile',
         message:
-            'Firebase is intentionally not connected yet. Your current session keeps transactions in memory while the frontend takes shape.',
+            'Firebase is intentionally not connected yet. Your transactions and Money Notes are saved locally on this device.',
       ),
     );
   }

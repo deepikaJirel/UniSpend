@@ -1,8 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:unispend/unispend_app.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   testWidgets('UniSpend dashboard renders and tracks entries', (
     WidgetTester tester,
   ) async {
@@ -51,6 +58,59 @@ void main() {
 
     await tester.ensureVisible(find.byType(TextField));
     await tester.enterText(find.byType(TextField), 'Save for lab supplies');
+    await tester.pumpAndSettle();
     expect(find.text('Save for lab supplies'), findsOneWidget);
+
+    final preferences = await SharedPreferences.getInstance();
+    final savedTransactions = preferences.getStringList(
+      'unispend.transactions',
+    );
+    final savedExpense = jsonDecode(savedTransactions!.last);
+
+    expect(savedTransactions, hasLength(2));
+    expect(savedExpense['title'], 'Groceries');
+    expect(savedExpense['amount'], 35);
+    expect(savedExpense['isIncome'], isFalse);
+    expect(savedExpense['category'], 'Rent');
+    expect(
+      preferences.getString('unispend.moneyNote'),
+      'Save for lab supplies',
+    );
+  });
+
+  testWidgets('restores saved transactions, categories, and Money Notes', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'unispend.transactions': [
+        jsonEncode({
+          'title': 'Coffee before class',
+          'amount': 6.75,
+          'isIncome': false,
+          'category': 'Coffee / Starbucks',
+          'createdAt': '2026-06-17T08:30:00.000',
+        }),
+        jsonEncode({
+          'title': 'Math tutoring',
+          'amount': 45.0,
+          'isIncome': true,
+          'category': 'Tutoring',
+          'createdAt': '2026-06-17T14:00:00.000',
+        }),
+      ],
+      'unispend.moneyNote': 'Textbook payment is due Friday',
+    });
+
+    await tester.pumpWidget(const UniSpendApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Coffee before class'), findsOneWidget);
+    expect(find.text('Coffee / Starbucks'), findsOneWidget);
+    expect(find.text('Math tutoring'), findsOneWidget);
+    expect(find.text('Tutoring'), findsOneWidget);
+    expect(find.textContaining(r'$38.25'), findsWidgets);
+
+    final notesField = tester.widget<TextField>(find.byType(TextField));
+    expect(notesField.controller?.text, 'Textbook payment is due Friday');
   });
 }
