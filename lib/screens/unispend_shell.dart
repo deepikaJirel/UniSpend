@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/money_entry.dart';
 import '../theme/app_theme.dart';
@@ -17,6 +20,9 @@ class UniSpendShell extends StatefulWidget {
 }
 
 class _UniSpendShellState extends State<UniSpendShell> {
+  static const _entriesKey = 'unispend.transactions';
+  static const _moneyNoteKey = 'unispend.moneyNote';
+
   final List<MoneyEntry> entries = [];
   final moneyNoteController = TextEditingController();
   int selectedIndex = 0;
@@ -39,6 +45,12 @@ class _UniSpendShellState extends State<UniSpendShell> {
   List<MoneyEntry> get recentEntries => entries.reversed.take(5).toList();
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedData();
+  }
+
+  @override
   void dispose() {
     moneyNoteController.dispose();
     super.dispose();
@@ -46,10 +58,62 @@ class _UniSpendShellState extends State<UniSpendShell> {
 
   void addEntry(MoneyEntry entry) {
     setState(() => entries.add(entry));
+    _saveTransactions();
   }
 
   void deleteEntry(MoneyEntry entry) {
     setState(() => entries.remove(entry));
+    _saveTransactions();
+  }
+
+  Future<void> _loadSavedData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEntries = prefs.getStringList(_entriesKey) ?? [];
+    final savedNote = prefs.getString(_moneyNoteKey) ?? '';
+
+    final loadedEntries = savedEntries
+        .map((entryJson) {
+          try {
+            final decoded = jsonDecode(entryJson) as Map<String, dynamic>;
+            return MoneyEntry.fromJson(decoded);
+          } on FormatException {
+            return null;
+          } on TypeError {
+            return null;
+          }
+        })
+        .whereType<MoneyEntry>()
+        .toList();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      entries
+        ..clear()
+        ..addAll(loadedEntries);
+      moneyNote = savedNote;
+      moneyNoteController.text = savedNote;
+    });
+  }
+
+  Future<void> _saveTransactions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final entryJson = entries
+        .map((entry) => jsonEncode(entry.toJson()))
+        .toList();
+    await prefs.setStringList(_entriesKey, entryJson);
+  }
+
+  Future<void> _saveMoneyNote(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_moneyNoteKey, value);
+  }
+
+  void updateMoneyNote(String value) {
+    setState(() => moneyNote = value);
+    _saveMoneyNote(value);
   }
 
   void openAddEntrySheet(bool isIncome) {
@@ -59,7 +123,7 @@ class _UniSpendShellState extends State<UniSpendShell> {
       showDragHandle: false,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
         return AddEntrySheet(isIncome: isIncome, onSave: addEntry);
@@ -81,7 +145,7 @@ class _UniSpendShellState extends State<UniSpendShell> {
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
         return SafeArea(
@@ -156,7 +220,7 @@ class _UniSpendShellState extends State<UniSpendShell> {
         safeDailySpend: safeDailySpend,
         moneyNoteController: moneyNoteController,
         moneyNote: moneyNote,
-        onMoneyNoteChanged: (value) => setState(() => moneyNote = value),
+        onMoneyNoteChanged: updateMoneyNote,
         onAddIncome: () => openAddEntrySheet(true),
         onAddExpense: () => openAddEntrySheet(false),
         onDeleteEntry: deleteEntry,
@@ -826,8 +890,19 @@ class _DashboardHeader extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.circular(8),
+        gradient: const LinearGradient(
+          colors: [AppColors.ink, AppColors.forest],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.forest.withValues(alpha: .18),
+            blurRadius: 26,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
       child: Wrap(
         spacing: 22,
