@@ -39,6 +39,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -57,6 +58,21 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/logo/unispend_icon.png
+    - assets/logo/unispend_full_logo.png
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
+  image_path: "assets/logo/unispend_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/logo/unispend_icon.png"
+    background_color: "#E7F6EF"
+    theme_color: "#146C5D"
 
   # To add assets to your application, add an assets section, like this:
   # assets:
