@@ -113,4 +113,46 @@ void main() {
     final notesField = tester.widget<TextField>(find.byType(TextField));
     expect(notesField.controller?.text, 'Textbook payment is due Friday');
   });
+
+  testWidgets('remembers the last selected income and expense categories', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({
+      'unispend.selectedIncomeCategory': 'Scholarship',
+      'unispend.selectedExpenseCategory': 'Rent',
+    });
+
+    await tester.pumpWidget(const UniSpendApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Income'));
+    await tester.pumpAndSettle();
+    final incomeFields = find.descendant(
+      of: find.byType(BottomSheet),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(incomeFields.first, 'Merit award');
+    await tester.enterText(incomeFields.last, '500');
+    await tester.tap(find.text('Save transaction'));
+    await tester.pumpAndSettle();
+
+    final preferences = await SharedPreferences.getInstance();
+    final savedTransactions = preferences.getStringList(
+      'unispend.transactions',
+    );
+    final savedIncome = jsonDecode(savedTransactions!.single);
+    expect(savedIncome['category'], 'Scholarship');
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Expense'));
+    await tester.pumpAndSettle();
+    final coffeeCategory = find.text('Coffee / Starbucks');
+    await tester.ensureVisible(coffeeCategory);
+    await tester.tap(coffeeCategory);
+    await tester.pumpAndSettle();
+
+    expect(
+      preferences.getString('unispend.selectedExpenseCategory'),
+      'Coffee / Starbucks',
+    );
+  });
 }

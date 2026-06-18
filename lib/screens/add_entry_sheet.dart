@@ -7,11 +7,15 @@ import '../widgets/category_badge.dart';
 
 class AddEntrySheet extends StatefulWidget {
   final bool isIncome;
+  final String? initialCategory;
+  final ValueChanged<String>? onCategoryChanged;
   final ValueChanged<MoneyEntry> onSave;
 
   const AddEntrySheet({
     super.key,
     required this.isIncome,
+    this.initialCategory,
+    this.onCategoryChanged,
     required this.onSave,
   });
 
@@ -30,9 +34,13 @@ class _AddEntrySheetState extends State<AddEntrySheet> {
   @override
   void initState() {
     super.initState();
-    selectedCategory = widget.isIncome
+    final fallback = widget.isIncome
         ? categories.first
         : CategoryCatalog.find('Rent', isIncome: false);
+    selectedCategory = categories.firstWhere(
+      (category) => category.name == widget.initialCategory,
+      orElse: () => fallback,
+    );
   }
 
   @override
@@ -54,6 +62,11 @@ class _AddEntrySheetState extends State<AddEntrySheet> {
       ),
     );
     Navigator.pop(context);
+  }
+
+  void selectCategory(CategoryData category) {
+    setState(() => selectedCategory = category);
+    widget.onCategoryChanged?.call(category.name);
   }
 
   @override
@@ -210,8 +223,7 @@ class _AddEntrySheetState extends State<AddEntrySheet> {
                         label: category.name,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
-                          onTap: () =>
-                              setState(() => selectedCategory = category),
+                          onTap: () => selectCategory(category),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
                             padding: const EdgeInsets.all(8),

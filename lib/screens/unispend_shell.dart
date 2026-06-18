@@ -22,11 +22,15 @@ class UniSpendShell extends StatefulWidget {
 class _UniSpendShellState extends State<UniSpendShell> {
   static const _entriesKey = 'unispend.transactions';
   static const _moneyNoteKey = 'unispend.moneyNote';
+  static const _incomeCategoryKey = 'unispend.selectedIncomeCategory';
+  static const _expenseCategoryKey = 'unispend.selectedExpenseCategory';
 
   final List<MoneyEntry> entries = [];
   final moneyNoteController = TextEditingController();
   int selectedIndex = 0;
   String moneyNote = '';
+  String selectedIncomeCategory = 'Campus Job';
+  String selectedExpenseCategory = 'Rent';
 
   double get totalIncome => entries
       .where((entry) => entry.isIncome)
@@ -70,6 +74,8 @@ class _UniSpendShellState extends State<UniSpendShell> {
     final prefs = await SharedPreferences.getInstance();
     final savedEntries = prefs.getStringList(_entriesKey) ?? [];
     final savedNote = prefs.getString(_moneyNoteKey) ?? '';
+    final savedIncomeCategory = prefs.getString(_incomeCategoryKey);
+    final savedExpenseCategory = prefs.getString(_expenseCategoryKey);
 
     final loadedEntries = savedEntries
         .map((entryJson) {
@@ -95,6 +101,8 @@ class _UniSpendShellState extends State<UniSpendShell> {
         ..addAll(loadedEntries);
       moneyNote = savedNote;
       moneyNoteController.text = savedNote;
+      selectedIncomeCategory = savedIncomeCategory ?? selectedIncomeCategory;
+      selectedExpenseCategory = savedExpenseCategory ?? selectedExpenseCategory;
     });
   }
 
@@ -116,6 +124,22 @@ class _UniSpendShellState extends State<UniSpendShell> {
     _saveMoneyNote(value);
   }
 
+  Future<void> _updateSelectedCategory(bool isIncome, String category) async {
+    setState(() {
+      if (isIncome) {
+        selectedIncomeCategory = category;
+      } else {
+        selectedExpenseCategory = category;
+      }
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      isIncome ? _incomeCategoryKey : _expenseCategoryKey,
+      category,
+    );
+  }
+
   void openAddEntrySheet(bool isIncome) {
     showModalBottomSheet(
       context: context,
@@ -126,7 +150,15 @@ class _UniSpendShellState extends State<UniSpendShell> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return AddEntrySheet(isIncome: isIncome, onSave: addEntry);
+        return AddEntrySheet(
+          isIncome: isIncome,
+          initialCategory: isIncome
+              ? selectedIncomeCategory
+              : selectedExpenseCategory,
+          onCategoryChanged: (category) =>
+              _updateSelectedCategory(isIncome, category),
+          onSave: addEntry,
+        );
       },
     );
   }
