@@ -12,13 +12,9 @@ UniSpend is a cross-platform Flutter finance app designed for students to track 
 
 ![Home Dashboard](docs/screenshots/home-dashboard.png)
 
-### Add Transaction
+### Empty Dashboard
 
-![Add Transaction](docs/screenshots/add-transaction.png)
-
-### Budget Page
-
-![Budget Page](docs/screenshots/budget.png)
+![Empty Dashboard](docs/screenshots/home-empty.png)
 
 ## Features
 
